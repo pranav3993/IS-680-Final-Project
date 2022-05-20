@@ -1,0 +1,211 @@
+---
+title: "IS-680_FALL_FINAL_V_SAI_PRANAV"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+require(tidyverse)
+```
+
+**Data**
+```{r}
+sal_data = read.csv('C:/Users/prana/Desktop/SAI/FALL 21/IS-680-R/Project_Datasets/Levels_Fyi_Salary_Data.csv')
+sal_data
+```
+
+```{r}
+names(sal_data)
+```
+
+
+```{r}
+ncol(sal_data)
+```
+Checking for the number of columns
+
+```{r}
+nrow(sal_data)
+```
+Checking for the number of rows
+
+```{r}
+summary(sal_data)
+```
+
+**Outliers Detection and Removal**
+```{r}
+ggplot(sal_data, aes(totalyearlycompensation)) +
+  geom_boxplot() +
+  coord_flip()
+```
+
+```{r}
+q1 <- quantile(sal_data$totalyearlycompensation, 0.25)
+q3 <- quantile(sal_data$totalyearlycompensation, 0.75)
+iqr <- IQR(sal_data$totalyearlycompensation)
+q1
+q3
+iqr
+```
+
+
+```{r}
+no_outliers <- subset(sal_data, sal_data$totalyearlycompensation > (q1 - 1.5*iqr) & sal_data$totalyearlycompensation < (q3 + 1.5*iqr))
+no_outliers
+```
+
+```{r}
+nrow(sal_data) - nrow(no_outliers)
+```
+
+```{r}
+ggplot(no_outliers, aes(totalyearlycompensation)) +
+  geom_boxplot() +
+  coord_flip()
+```
+Now as you can see in the above box plot there are no outliers in the column.
+
+**Nulls Detection & Removal**
+```{r}
+sum(is.na(no_outliers))
+```
+
+```{r}
+no_na <- na.omit(sal_data)
+no_na_ot <- na.omit(no_outliers)
+```
+
+
+```{r}
+no_na
+```
+
+```{r}
+no_na_ot
+```
+
+```{r}
+ggplot(sal_data, aes(totalyearlycompensation), fill = title) +
+  geom_histogram() +
+  facet_wrap(~title)
+```
+Looking at the histogram we can say that Software Engineer most of the data is in distributed to Software Engineer.
+
+**Top companies that offer more Compensation as per dataset**
+```{r}
+tot_sal <- sal_data %>%
+            group_by(company) %>%
+            summarize(tot_salry = sum(totalyearlycompensation)) %>%
+            arrange(desc(tot_salry))
+tot_sal
+```
+Here in the chunk above we got the companies that offer more compensation by sorting 'totalyearlycompensation' column.
+
+```{r}
+tot_sal$company[1:10]
+```
+In the above two chunk the Top 10 companies who offer more compensation to their employees has been extracted.
+
+****
+```{r}
+lvl_exp <- sal_data %>%
+            select(level,yearsofexperience,location) %>%
+            mutate(most_exp = yearsofexperience > 40) %>%
+            group_by(level, location) %>%
+            arrange(desc(most_exp))
+            
+lvl_exp
+```
+Displaying the levels which have experience more than 40 years.
+
+```{r}
+lvl_exp$level[1:6]
+```
+Top 6 levels which have an experience of more than 40 years.
+
+
+```{r}
+cmp_bns <- no_outliers %>%
+            select(company, bonus) %>%
+            group_by(company) %>%
+            summarise(total_bns = sum(bonus)) %>%
+            arrange(desc(total_bns))
+cmp_bns
+```
+The above chunk elaborates about the companies which gave more bonus compared to other companies in descending order.
+
+
+```{r}
+city_max <- no_outliers %>%
+              group_by(location) %>%
+              summarize(max_sal = max(totalyearlycompensation)) %>%
+              arrange(desc(max_sal))
+city_max
+```
+From the above chunk you can extract the info. like in which city you are most likely to get paid more.
+
+```{r}
+unique(sal_data[c("gender")])
+```
+
+
+**Exploratory Analysis**
+```{r}
+ggplot(data = sal_data,
+       mapping = aes(x = totalyearlycompensation)) +
+  geom_histogram(alpha = 0.5, bins = 50) +
+  labs(x = "yearly_compensation", y = "number_of_employees",
+       title = "Compensation based on gender") +
+  facet_wrap(~gender)
+```
+
+```{r}
+ggplot(data = no_outliers,
+       mapping = aes(x = totalyearlycompensation)) +
+  geom_histogram(alpha = 0.5, bins = 50) +
+  labs(x = "yearly_compensation", y = "number_of_employees",
+       title = "Compensation based on gender") +
+  facet_wrap(~gender)
+```
+As you can see the difference in the above and below histogram with the same options. The output for the second histogram which is data without any outliers in it gave us the best distribution.
+
+
+```{r}
+ggplot(data = no_na_ot,
+       mapping = aes(x = totalyearlycompensation)) +
+  geom_histogram(alpha = 0.5, bins = 50) +
+  labs(x = "yearly_compensation", y = "number_of_employees",
+       title = "Compensation based on gender") +
+  facet_wrap(~gender)
+```
+Distribution Graph acheived after outliers and Nulls Removal.
+
+```{r}
+ggplot(data = no_outliers,
+       mapping = aes(x = title, y = yearsofexperience)) +
+  geom_point(aes(colour = gender)) +
+  theme_bw() +
+  coord_flip()
+```
+The plot above includes the unwanted data, nulls and outliers, where we are not able to extract the information clearly.
+
+```{r}
+ggplot(data = no_na_ot,
+       mapping = aes(x = title, y = yearsofexperience, fill = Masters_Degree)) +
+  geom_point(aes(colour = gender)) +
+  theme_bw() +
+  coord_flip()
+```
+Looking at this plot we can say which gender has more experience based on title after nulls and outlier removal.
+
+```{r}
+ggplot(data = no_na_ot,
+       mapping = aes(x = title, y = totalyearlycompensation)) +
+  geom_point(aes(colour = gender)) +
+  theme_bw() +
+  coord_flip()
+```
+
+
